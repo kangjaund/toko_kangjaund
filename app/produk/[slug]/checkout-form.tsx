@@ -118,7 +118,7 @@ export default function CheckoutForm({
                 href="/api/qris-download"
                 className="mt-2 block text-center text-xs font-semibold text-stone underline hover:text-orange"
               >
-                Transaksi lewat m-banking di HP ini? Download gambar QRIS-nya di sini
+                Download QRIS
               </a>
             )}
           </>
