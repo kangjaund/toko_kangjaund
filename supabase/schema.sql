@@ -3,6 +3,15 @@
 -- Jalankan di Supabase SQL Editor (Project > SQL Editor > New Query)
 -- =========================================================
 
+-- MIGRASI: kalau kamu SUDAH PERNAH jalankan schema ini sebelumnya (tabel udah ada),
+-- jangan run ulang semuanya dari atas. Cukup jalankan 1 baris ini aja buat nambah
+-- kolom stok ke tabel products yang udah ada:
+--
+--   alter table products add column if not exists stock_qty int;
+--
+-- Setelah itu skip ke bagian bawah, TIDAK perlu run "create table" lagi.
+-- =========================================================
+
 -- 1. PROFIL (satu baris saja, ini halaman "kartu nama" kamu)
 create table if not exists profile (
   id uuid primary key default gen_random_uuid(),
@@ -37,6 +46,7 @@ create table if not exists products (
   title text not null,
   description text default '',
   price_idr int not null check (price_idr >= 0),
+  stock_qty int, -- NULL = stok tak terbatas/tidak ditampilkan. Angka = stok tersisa (fear marketing + auto-berkurang saat lunas)
   cover_image_url text,
   file_path text not null, -- path di Supabase Storage (bucket private)
   is_active boolean default true,
