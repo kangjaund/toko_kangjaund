@@ -17,6 +17,19 @@ export default async function ProfilePage() {
 
   const displayName = profile?.display_name ?? "Toko Kang Jaund";
 
+  function stockBadge(stockQty: number | null) {
+    if (stockQty === null) return null;
+    return (
+      <span
+        className={`mt-1 inline-block w-fit rounded-full px-2 py-0.5 text-[11px] font-bold ${
+          stockQty > 0 ? "bg-red-50 text-red-600" : "bg-neutral-100 text-neutral-400"
+        }`}
+      >
+        {stockQty > 0 ? `Tersisa ${stockQty}` : "Habis"}
+      </span>
+    );
+  }
+
   return (
     <>
       {/* Header */}
@@ -38,21 +51,21 @@ export default async function ProfilePage() {
         <div className="mx-auto flex max-w-xl flex-col items-center gap-5 text-center">
           <Badge>Produk Digital</Badge>
 
+          <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-4xl">
+            Selamat Datang di
+            <br />
+            <span className="text-orange">{displayName}</span>
+          </h1>
+
           {profile?.avatar_url ? (
             <Image
               src={profile.avatar_url}
               alt={displayName}
-              width={96}
-              height={96}
-              className="rounded-full border-4 border-white object-cover shadow-sm"
+              width={220}
+              height={220}
+              className="h-auto w-48 object-contain sm:w-56"
             />
-          ) : (
-            <div className="h-24 w-24 rounded-full border-4 border-white bg-white shadow-sm" />
-          )}
-
-          <h1 className="text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
-            {displayName}
-          </h1>
+          ) : null}
 
           {profile?.bio && (
             <p className="max-w-sm text-stone">{profile.bio}</p>
@@ -73,6 +86,12 @@ export default async function ProfilePage() {
                 </a>
               ))}
             </div>
+          )}
+
+          {products && products.length > 0 && (
+            <LinkButton href="#produk" variant="primary" size="lg" className="mt-2">
+              Lihat Produk ↓
+            </LinkButton>
           )}
         </div>
       </section>
@@ -111,6 +130,7 @@ export default async function ProfilePage() {
                   <p className="text-sm font-medium text-stone">
                     Rp {product.price_idr.toLocaleString("id-ID")}
                   </p>
+                  {stockBadge(product.stock_qty)}
                 </div>
               </Link>
             ))}

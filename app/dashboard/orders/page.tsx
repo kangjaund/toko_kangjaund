@@ -7,6 +7,7 @@ import { Button } from "@/app/components/Button";
 type OrderRow = {
   id: string;
   order_code: string;
+  product_id: string;
   buyer_email: string;
   buyer_name: string | null;
   buyer_whatsapp: string | null;
@@ -17,6 +18,8 @@ type OrderRow = {
   created_at: string;
   products: { title: string } | null;
 };
+
+type ProductWithId = { id: string; title: string; stock_qty: number | null };
 
 const statusLabel: Record<string, string> = {
   pending_review: "Menunggu verifikasi",
@@ -40,7 +43,7 @@ export default function OrdersPage() {
     const { data } = await supabase
       .from("orders")
       .select(
-        "id, order_code, buyer_email, buyer_name, buyer_whatsapp, amount_idr, status, proof_path, download_token, created_at, products(title)"
+        "id, order_code, product_id, buyer_email, buyer_name, buyer_whatsapp, amount_idr, status, proof_path, download_token, created_at, products(title)"
       )
       .order("created_at", { ascending: false })
       .limit(100);
@@ -75,6 +78,20 @@ export default function OrdersPage() {
         paid_at: new Date().toISOString(),
       })
       .eq("id", order.id);
+
+    // Kurangi stok otomatis kalau produk itu punya stok terbatas (bukan null/tak terbatas)
+    const { data: product } = await supabase
+      .from("products")
+      .select("id, stock_qty")
+      .eq("id", order.product_id)
+      .single<ProductWithId>();
+
+    if (product && product.stock_qty !== null && product.stock_qty > 0) {
+      await supabase
+        .from("products")
+        .update({ stock_qty: product.stock_qty - 1 })
+        .eq("id", product.id);
+    }
 
     load();
   }

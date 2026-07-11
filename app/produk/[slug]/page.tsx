@@ -15,7 +15,7 @@ export default async function ProductPage({
   const [{ data: product }, { data: profile }] = await Promise.all([
     supabase
       .from("products")
-      .select("id, slug, title, description, price_idr, cover_image_url, is_active")
+      .select("id, slug, title, description, price_idr, stock_qty, cover_image_url, is_active")
       .eq("slug", slug)
       .eq("is_active", true)
       .single(),
@@ -52,6 +52,17 @@ export default async function ProductPage({
           <p className="mt-1 text-xl font-bold text-orange-dark">
             Rp {product.price_idr.toLocaleString("id-ID")}
           </p>
+          {product.stock_qty !== null && (
+            <span
+              className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-bold ${
+                product.stock_qty > 0
+                  ? "bg-red-50 text-red-600"
+                  : "bg-neutral-100 text-neutral-500"
+              }`}
+            >
+              {product.stock_qty > 0 ? `Tersisa ${product.stock_qty}` : "Stok habis"}
+            </span>
+          )}
         </div>
 
         {product.description && (
@@ -60,12 +71,19 @@ export default async function ProductPage({
           </p>
         )}
 
-        <CheckoutForm
-          productSlug={product.slug}
-          price={product.price_idr}
-          qrisImageUrl={profile?.qris_image_url ?? null}
-          whatsappNumber={profile?.whatsapp_number ?? null}
-        />
+        {product.stock_qty === 0 ? (
+          <div className="rounded-2xl border-2 border-ink/5 bg-white p-5 text-center text-sm text-stone">
+            Maaf, stok produk ini sedang habis. Hubungi penjual kalau mau ditanya
+            ketersediaan berikutnya.
+          </div>
+        ) : (
+          <CheckoutForm
+            productSlug={product.slug}
+            price={product.price_idr}
+            qrisImageUrl={profile?.qris_image_url ?? null}
+            whatsappNumber={profile?.whatsapp_number ?? null}
+          />
+        )}
       </main>
     </>
   );
