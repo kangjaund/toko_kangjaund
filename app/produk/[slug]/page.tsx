@@ -2,7 +2,40 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import type { Metadata } from "next";
 import CheckoutForm from "./checkout-form";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+  const { data: product } = await supabase
+    .from("products")
+    .select("title, description, price_idr, cover_image_url")
+    .eq("slug", slug)
+    .eq("is_active", true)
+    .single();
+
+  if (!product) return { title: "Produk tidak ditemukan" };
+
+  const description =
+    product.description?.slice(0, 155) ||
+    `Beli ${product.title} seharga Rp ${product.price_idr.toLocaleString("id-ID")}. Download langsung setelah bayar.`;
+
+  return {
+    title: product.title,
+    description,
+    openGraph: {
+      title: product.title,
+      description,
+      images: product.cover_image_url ? [product.cover_image_url] : [],
+      type: "website",
+    },
+  };
+}
 
 export default async function ProductPage({
   params,
@@ -24,8 +57,29 @@ export default async function ProductPage({
 
   if (!product) notFound();
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.title,
+    description: product.description || product.title,
+    image: product.cover_image_url || undefined,
+    offers: {
+      "@type": "Offer",
+      price: product.price_idr,
+      priceCurrency: "IDR",
+      availability:
+        product.stock_qty === 0
+          ? "https://schema.org/OutOfStock"
+          : "https://schema.org/InStock",
+    },
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="border-b border-ink/5 bg-cream/90 backdrop-blur">
         <div className="mx-auto max-w-xl px-6 py-4">
           <Link href="/" className="text-sm font-semibold text-stone hover:text-orange">
@@ -71,19 +125,13 @@ export default async function ProductPage({
           </p>
         )}
 
-        {product.stock_qty === 0 ? (
-          <div className="rounded-2xl border-2 border-ink/5 bg-white p-5 text-center text-sm text-stone">
-            Maaf, stok produk ini sedang habis. Hubungi penjual kalau mau ditanya
-            ketersediaan berikutnya.
-          </div>
-        ) : (
-          <CheckoutForm
-            productSlug={product.slug}
-            price={product.price_idr}
-            qrisImageUrl={profile?.qris_image_url ?? null}
-            whatsappNumber={profile?.whatsapp_number ?? null}
-          />
-        )}
+        <CheckoutForm
+          productSlug={product.slug}
+          price={product.price_idr}
+          qrisImageUrl={profile?.qris_image_url ?? null}
+          whatsappNumber={profile?.whatsapp_number ?? null}
+          soldOut={product.stock_qty === 0}
+        />
       </main>
     </>
   );

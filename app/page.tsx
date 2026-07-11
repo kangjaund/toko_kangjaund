@@ -1,7 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import Link from "next/link";
-import { Badge } from "@/app/components/Badge";
 import { LinkButton } from "@/app/components/Button";
 
 export const revalidate = 30;
@@ -35,9 +34,9 @@ export default async function ProfilePage() {
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-ink/5 bg-cream/90 backdrop-blur">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <span className="text-lg font-extrabold tracking-tight text-orange">
+          <Link href="/" className="text-lg font-extrabold tracking-tight text-orange">
             {displayName.toUpperCase()}
-          </span>
+          </Link>
           {products && products.length > 0 && (
             <LinkButton href="#produk" variant="outline" size="sm">
               Lihat Produk
@@ -49,8 +48,6 @@ export default async function ProfilePage() {
       {/* Hero */}
       <section className="bg-gradient-to-b from-peach/70 to-cream px-6 py-16">
         <div className="mx-auto flex max-w-xl flex-col items-center gap-5 text-center">
-          <Badge>Produk Digital</Badge>
-
           <h1 className="text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-4xl">
             Selamat Datang di
             <br />
@@ -139,7 +136,15 @@ export default async function ProfilePage() {
       )}
 
       <footer className="mx-auto max-w-3xl px-6 pb-10 text-center text-xs text-stone">
-        © {new Date().getFullYear()} {displayName}
+        © {new Date().getFullYear()} {displayName} · dibuat oleh{" "}
+        <a
+          href="https://www.threads.com/@kang.jaund"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-orange hover:underline"
+        >
+          Kang Jaund
+        </a>
       </footer>
     </>
   );

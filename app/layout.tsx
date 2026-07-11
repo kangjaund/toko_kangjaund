@@ -1,9 +1,33 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://toko-kangjaund.vercel.app";
+
 export const metadata: Metadata = {
-  title: "Toko Kang Jaund",
-  description: "Link & produk digital Toko Kang Jaund",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: "Toko Kang Jaund — Produk Digital",
+    template: "%s | Toko Kang Jaund",
+  },
+  description:
+    "Produk digital dari Kang Jaund — download, langsung pakai. Bayar mudah lewat QRIS.",
+  openGraph: {
+    title: "Toko Kang Jaund — Produk Digital",
+    description: "Produk digital dari Kang Jaund — download, langsung pakai.",
+    url: siteUrl,
+    siteName: "Toko Kang Jaund",
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Toko Kang Jaund — Produk Digital",
+    description: "Produk digital dari Kang Jaund — download, langsung pakai.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

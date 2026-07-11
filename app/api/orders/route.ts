@@ -24,12 +24,17 @@ export async function POST(req: NextRequest) {
     // Ambil harga dari DATABASE, bukan dari input browser
     const { data: product, error } = await supabase
       .from("products")
-      .select("id, title, price_idr, is_active")
+      .select("id, title, price_idr, is_active, stock_qty")
       .eq("slug", productSlug)
       .single();
 
     if (error || !product || !product.is_active) {
       return NextResponse.json({ error: "Produk tidak ditemukan" }, { status: 404 });
+    }
+
+    // Validasi stok di SERVER, bukan cuma di tampilan - supaya nggak bisa dilewati
+    if (product.stock_qty !== null && product.stock_qty <= 0) {
+      return NextResponse.json({ error: "Maaf, stok produk ini sudah habis." }, { status: 409 });
     }
 
     const orderCode = `ORD-${Date.now()}-${randomUUID().slice(0, 6)}`;

@@ -13,6 +13,8 @@ export default function SettingsPage() {
   const [whatsapp, setWhatsapp] = useState("");
   const [qrisUrl, setQrisUrl] = useState<string | null>(null);
   const [qrisFile, setQrisFile] = useState<File | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -25,6 +27,7 @@ export default function SettingsPage() {
         setBio(data.bio ?? "");
         setWhatsapp(data.whatsapp_number ?? "");
         setQrisUrl(data.qris_image_url ?? null);
+        setAvatarUrl(data.avatar_url ?? null);
       }
     })();
   }, []);
@@ -47,6 +50,20 @@ export default function SettingsPage() {
       }
     }
 
+    let newAvatarUrl = avatarUrl;
+    if (avatarFile) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const path = `${user?.id}/avatar-${Date.now()}-${avatarFile.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("covers")
+        .upload(path, avatarFile);
+      if (!uploadError) {
+        newAvatarUrl = supabase.storage.from("covers").getPublicUrl(path).data.publicUrl;
+      }
+    }
+
     if (profileId) {
       await supabase
         .from("profile")
@@ -55,12 +72,15 @@ export default function SettingsPage() {
           bio,
           whatsapp_number: whatsapp,
           qris_image_url: newQrisUrl,
+          avatar_url: newAvatarUrl,
         })
         .eq("id", profileId);
     }
 
     setQrisUrl(newQrisUrl);
     setQrisFile(null);
+    setAvatarUrl(newAvatarUrl);
+    setAvatarFile(null);
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -103,6 +123,19 @@ export default function SettingsPage() {
             className={inputClass}
           />
         </label>
+        <FileInput
+          label="Foto/gambar profil (muncul di halaman utama, mis. sticker/logo kamu)"
+          accept="image/*"
+          onChange={setAvatarFile}
+        />
+        {avatarUrl && !avatarFile && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={avatarUrl}
+            alt="Foto profil saat ini"
+            className="h-32 w-32 rounded-xl border-2 border-ink/10 object-contain"
+          />
+        )}
         <FileInput
           label="Gambar QRIS statis (ditampilkan di setiap halaman checkout produk)"
           accept="image/*"
