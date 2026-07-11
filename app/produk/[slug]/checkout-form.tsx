@@ -181,7 +181,7 @@ export default function CheckoutForm({
             size="sm"
             className="self-center"
           >
-            {soldOut ? "Tanya kapan restock ke penjual" : "Ada kendala? Chat WhatsApp penjual"}
+            {soldOut ? "Tanya kapan restock" : "Ada kendala? Silakan chat kami"}
           </LinkButton>
         )}
       </div>
