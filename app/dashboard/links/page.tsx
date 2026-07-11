@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/app/components/Button";
+import { SOCIAL_PLATFORMS, SocialIcon } from "@/app/components/SocialIcons";
 
 type LinkRow = {
   id: string;
@@ -11,18 +12,22 @@ type LinkRow = {
   is_active: boolean;
   sort_order: number;
   click_count: number;
+  link_type: "regular" | "social";
+  platform: string | null;
 };
 
 export default function LinksPage() {
   const supabase = createClient();
   const [links, setLinks] = useState<LinkRow[]>([]);
+  const [linkType, setLinkType] = useState<"regular" | "social">("regular");
+  const [platform, setPlatform] = useState(SOCIAL_PLATFORMS[0].value);
   const [title, setTitle] = useState("");
   const [url, setUrl] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function load() {
     const { data } = await supabase.from("links").select("*").order("sort_order");
-    setLinks(data ?? []);
+    setLinks((data as LinkRow[]) ?? []);
   }
 
   useEffect(() => {
@@ -30,16 +35,19 @@ export default function LinksPage() {
   }, []);
 
   async function addLink() {
-    if (!title || !url) return;
+    if (linkType === "regular" && (!title || !url)) return;
+    if (linkType === "social" && !url) return;
     setLoading(true);
     const {
       data: { user },
     } = await supabase.auth.getUser();
     await supabase.from("links").insert({
-      title,
+      title: linkType === "social" ? SOCIAL_PLATFORMS.find((p) => p.value === platform)?.label : title,
       url,
       owner_id: user?.id,
       sort_order: links.length,
+      link_type: linkType,
+      platform: linkType === "social" ? platform : null,
     });
     setTitle("");
     setUrl("");
@@ -68,12 +76,47 @@ export default function LinksPage() {
       </div>
 
       <div className="flex flex-col gap-2.5 rounded-2xl border-2 border-ink/5 bg-white p-5">
-        <input
-          placeholder="Judul (mis. Threads @kang.jaund)"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className={inputClass}
-        />
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setLinkType("regular")}
+            className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition ${
+              linkType === "regular" ? "bg-orange text-white" : "bg-cream text-stone"
+            }`}
+          >
+            Link biasa
+          </button>
+          <button
+            type="button"
+            onClick={() => setLinkType("social")}
+            className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition ${
+              linkType === "social" ? "bg-orange text-white" : "bg-cream text-stone"
+            }`}
+          >
+            Sosial media (icon)
+          </button>
+        </div>
+
+        {linkType === "social" ? (
+          <select
+            value={platform}
+            onChange={(e) => setPlatform(e.target.value)}
+            className={inputClass}
+          >
+            {SOCIAL_PLATFORMS.map((p) => (
+              <option key={p.value} value={p.value}>
+                {p.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            placeholder="Judul (mis. Join Grup Diskon)"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className={inputClass}
+          />
+        )}
         <input
           placeholder="URL (https://...)"
           value={url}
@@ -91,10 +134,15 @@ export default function LinksPage() {
             key={link.id}
             className="flex items-center justify-between gap-3 rounded-2xl border-2 border-ink/5 bg-white p-4"
           >
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-ink">{link.title}</p>
-              <p className="truncate text-xs text-stone">{link.url}</p>
-              <p className="text-xs text-stone">{link.click_count} klik</p>
+            <div className="flex min-w-0 items-center gap-3">
+              {link.link_type === "social" && (
+                <SocialIcon platform={link.platform} className="h-5 w-5 shrink-0 text-orange" />
+              )}
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-ink">{link.title}</p>
+                <p className="truncate text-xs text-stone">{link.url}</p>
+                <p className="text-xs text-stone">{link.click_count} klik</p>
+              </div>
             </div>
             <div className="flex shrink-0 gap-3">
               <button

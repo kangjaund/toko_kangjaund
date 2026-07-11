@@ -21,7 +21,7 @@ export async function sendOrderNotificationEmail(params: {
   const subject = `Pesanan Baru #${params.orderCode}`;
 
   try {
-    await resend.emails.send({
+    const { error: resendError } = await resend.emails.send({
       // Domain default Resend, cukup buat kirim ke email sendiri (bukan ke pembeli)
       from: "Toko Notif <onboarding@resend.dev>",
       to: process.env.NOTIFY_EMAIL,
@@ -39,6 +39,12 @@ export async function sendOrderNotificationEmail(params: {
         <p>Cek & verifikasi bukti transfer di dashboard &gt; Pesanan.</p>
       `,
     });
+
+    // Resend SDK TIDAK throw error - error dari API balik lewat field ini,
+    // jadi harus dicek manual atau bakal kelewat diam-diam.
+    if (resendError) {
+      console.error("Resend API error:", resendError);
+    }
   } catch (err) {
     console.error("Gagal kirim email notifikasi:", err);
   }

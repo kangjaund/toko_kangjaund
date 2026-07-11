@@ -95,6 +95,8 @@ export default async function ProductPage({
             alt={product.title}
             width={600}
             height={400}
+            priority
+            sizes="(max-width: 640px) 100vw, 576px"
             className="w-full rounded-2xl border-2 border-ink/5 object-cover"
           />
         ) : (

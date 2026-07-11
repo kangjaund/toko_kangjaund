@@ -70,6 +70,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Kirim notifikasi Telegram (opsional - kalau env var belum diisi, dilewati saja)
+    // PENTING: pakai await, karena di serverless function, proses yang nggak ditunggu
+    // bisa keputus di tengah jalan begitu response dikirim balik.
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
       const text =
         `🛒 Pesanan baru!\n` +
@@ -79,23 +81,37 @@ export async function POST(req: NextRequest) {
         `Kode: ${orderCode}\n\n` +
         `Cek & verifikasi di dashboard > Pesanan.`;
 
-      fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text }),
-      }).catch((err) => console.error("Gagal kirim notif Telegram:", err));
+      try {
+        const tgRes = await fetch(
+          `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text }),
+          }
+        );
+        if (!tgRes.ok) {
+          console.error("Telegram API error:", await tgRes.text());
+        }
+      } catch (err) {
+        console.error("Gagal kirim notif Telegram:", err);
+      }
     }
 
     // Kirim email notifikasi ke email SENDIRI, subject terstruktur "Pesanan Baru #ORD-xxx"
     // - dipakai buat trigger otomasi (n8n/Hermes) nanti, terpisah dari email pembeli.
-    sendOrderNotificationEmail({
-      orderCode,
-      productTitle: product.title,
-      amountIdr: product.price_idr,
-      buyerName: buyerName ?? "",
-      buyerEmail,
-      buyerWhatsapp: buyerWhatsapp ?? "",
-    }).catch((err) => console.error("Gagal kirim email notifikasi:", err));
+    try {
+      await sendOrderNotificationEmail({
+        orderCode,
+        productTitle: product.title,
+        amountIdr: product.price_idr,
+        buyerName: buyerName ?? "",
+        buyerEmail,
+        buyerWhatsapp: buyerWhatsapp ?? "",
+      });
+    } catch (err) {
+      console.error("Gagal kirim email notifikasi:", err);
+    }
 
     return NextResponse.json({ orderCode });
   } catch (err) {

@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import BasicProtection from "./components/BasicProtection";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://toko-kangjaund.vercel.app";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -37,7 +39,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id" className="h-full antialiased">
+      <head>
+        {supabaseUrl && <link rel="preconnect" href={supabaseUrl} />}
+      </head>
       <body className="min-h-full flex flex-col bg-cream text-ink">
+        <BasicProtection />
         {children}
       </body>
     </html>

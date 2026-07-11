@@ -32,6 +32,8 @@ create table if not exists links (
   title text not null,
   url text not null,
   icon text default 'link', -- nama icon (lucide-react)
+  link_type text not null default 'regular', -- 'regular' (tombol biasa) atau 'social' (icon-only di atas)
+  platform text, -- 'instagram' | 'tiktok' | 'youtube' | 'threads' | 'twitter' | 'facebook' | 'website' (dipakai kalau link_type = 'social')
   sort_order int default 0,
   is_active boolean default true,
   click_count int default 0,

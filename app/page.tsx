@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import Link from "next/link";
 import { LinkButton } from "@/app/components/Button";
+import { SocialIcon } from "@/app/components/SocialIcons";
 
 export const revalidate = 30;
 
@@ -60,6 +61,8 @@ export default async function ProfilePage() {
               alt={displayName}
               width={220}
               height={220}
+              priority
+              sizes="(max-width: 640px) 192px, 224px"
               className="h-auto w-48 object-contain sm:w-56"
             />
           ) : null}
@@ -68,20 +71,42 @@ export default async function ProfilePage() {
             <p className="max-w-sm text-stone">{profile.bio}</p>
           )}
 
-          {/* Links */}
-          {links && links.length > 0 && (
+          {/* Social icons - icon-only, di atas link biasa */}
+          {links && links.some((l) => l.link_type === "social") && (
+            <div className="mt-1 flex items-center gap-4">
+              {links
+                .filter((l) => l.link_type === "social")
+                .map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={link.title}
+                    className="text-ink transition hover:text-orange"
+                  >
+                    <SocialIcon platform={link.platform} className="h-6 w-6" />
+                  </a>
+                ))}
+            </div>
+          )}
+
+          {/* Links biasa */}
+          {links && links.some((l) => l.link_type !== "social") && (
             <div className="mt-2 flex w-full max-w-xs flex-col gap-3">
-              {links.map((link) => (
-                <a
-                  key={link.id}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-full border-2 border-ink/10 bg-white px-5 py-3 text-center text-sm font-semibold text-ink transition hover:border-orange hover:text-orange"
-                >
-                  {link.title}
-                </a>
-              ))}
+              {links
+                .filter((l) => l.link_type !== "social")
+                .map((link) => (
+                  <a
+                    key={link.id}
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full border-2 border-ink/10 bg-white px-5 py-3 text-center text-sm font-semibold text-ink transition hover:border-orange hover:text-orange"
+                  >
+                    {link.title}
+                  </a>
+                ))}
             </div>
           )}
 
@@ -115,6 +140,7 @@ export default async function ProfilePage() {
                     alt={product.title}
                     width={64}
                     height={64}
+                    sizes="64px"
                     className="h-16 w-16 shrink-0 rounded-xl object-cover"
                   />
                 ) : (

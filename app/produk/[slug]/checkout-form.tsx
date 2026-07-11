@@ -118,7 +118,7 @@ export default function CheckoutForm({
                 href="/api/qris-download"
                 className="mt-2 block text-center text-xs font-semibold text-stone underline hover:text-orange"
               >
-                Download QRIS
+                Transaksi lewat m-banking di HP ini? Download gambar QRIS-nya di sini
               </a>
             )}
           </>
@@ -181,7 +181,7 @@ export default function CheckoutForm({
             size="sm"
             className="self-center"
           >
-            {soldOut ? "Tanya kapan restock" : "Ada kendala? Silakan chat kami"}
+            {soldOut ? "Tanya kapan restock ke penjual" : "Ada kendala? Chat WhatsApp penjual"}
           </LinkButton>
         )}
       </div>
