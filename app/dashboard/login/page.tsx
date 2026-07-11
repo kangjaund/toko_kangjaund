@@ -58,11 +58,7 @@ export default function LoginPage() {
       {error && <p className="text-sm font-medium text-red-600">{error}</p>}
       <Button onClick={handleLogin} disabled={loading} size="lg">
         {loading ? "Memproses..." : "Masuk"}
-      </Button>
-      <p className="text-xs text-stone">
-        Akun dibuat manual lewat Supabase Dashboard &gt; Authentication &gt; Add user.
-        Belum ada fitur daftar sendiri karena ini situs pribadi, bukan multi-user.
-      </p>
+      </Button>      
     </main>
   );
 }
