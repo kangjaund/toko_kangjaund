@@ -6,12 +6,12 @@
 @import "@fontsource/plus-jakarta-sans/800.css";
 
 :root {
-  --color-cream: #fdf6ec;
-  --color-peach: #fbe7d0;
-  --color-orange: #ea580c;
-  --color-orange-dark: #c2410c;
-  --color-ink: #201a14;
-  --color-stone: #7c7267;
+  --color-cream: #f7f3ed;
+  --color-peach: #ebd8c3;
+  --color-orange: #ab5c37;
+  --color-orange-dark: #864222;
+  --color-ink: #231c17;
+  --color-stone: #73675e;
 }
 
 @theme inline {
