@@ -6,29 +6,12 @@
 @import "@fontsource/plus-jakarta-sans/800.css";
 
 :root {
-  /* Metro palette — solid, bold colors */
-  --metro-blue: #0078D7;
-  --metro-green: #107C10;
-  --metro-red: #D13438;
-  --metro-yellow: #FFB900;
-  --metro-purple: #68217A;
-  --metro-teal: #008272;
-  --metro-orange: #D83B01;
-
-  /* Neutrals */
-  --metro-bg: #F2F2F2;
-  --metro-surface: #FFFFFF;
-  --metro-text: #1A1A1A;
-  --metro-text-secondary: #666666;
-  --metro-border: #CCCCCC;
-
-  /* For compatibility with existing components */
-  --color-cream: var(--metro-bg);
-  --color-peach: #E5E5E5;
-  --color-orange: var(--metro-orange);
-  --color-orange-dark: #B02A00;
-  --color-ink: var(--metro-text);
-  --color-stone: var(--metro-text-secondary);
+  --color-cream: #f8f6f0;
+  --color-peach: #e5e8e1;
+  --color-orange: #4e6552;
+  --color-orange-dark: #394c3c;
+  --color-ink: #1f2621;
+  --color-stone: #6e7970;
 }
 
 @theme inline {
@@ -42,96 +25,7 @@
 }
 
 body {
-  background: var(--metro-bg);
-  color: var(--metro-text);
+  background: var(--color-cream);
+  color: var(--color-ink);
   font-family: var(--font-sans);
-}
-
-/* Metro-style tile base */
-.metro-tile {
-  background: var(--metro-surface);
-  border: 2px solid var(--metro-border);
-  border-radius: 0;
-  padding: 1.5rem;
-  transition: all 0.15s ease;
-}
-
-.metro-tile:hover {
-  border-color: var(--metro-blue);
-}
-
-/* Metro heading */
-.metro-heading {
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
-}
-
-/* Metro badge */
-.metro-badge {
-  display: inline-block;
-  padding: 0.25rem 0.75rem;
-  font-weight: 700;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  border: 2px solid currentColor;
-  background: transparent;
-}
-
-/* Metro button base */
-.metro-btn {
-  border-radius: 0;
-  border: 2px solid var(--metro-text);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  padding: 0.6rem 1.5rem;
-  background: transparent;
-  color: var(--metro-text);
-  transition: all 0.15s ease;
-}
-
-.metro-btn-primary {
-  background: var(--metro-blue);
-  border-color: var(--metro-blue);
-  color: white;
-}
-
-.metro-btn-primary:hover {
-  background: #0063B3;
-  border-color: #0063B3;
-}
-
-.metro-btn-outline:hover {
-  background: var(--metro-text);
-  color: white;
-}
-
-/* Grid for tiles */
-.metro-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1.5rem;
-}
-
-/* Large hero tile */
-.metro-hero {
-  background: var(--metro-blue);
-  color: white;
-  padding: 2.5rem 2rem;
-  border: 2px solid var(--metro-blue);
-  margin-bottom: 2rem;
-}
-
-.metro-hero h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: -0.02em;
-}
-
-.metro-hero p {
-  font-size: 1.1rem;
-  opacity: 0.9;
 }
