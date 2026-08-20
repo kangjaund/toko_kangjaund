@@ -1,6 +1,85 @@
 "use client";
+
 import {createContext,useCallback,useContext,useEffect,useMemo,useState} from "react";
-export interface CartItem {productId:string;slug:string;title:string;productType:"digital"|"physical";priceIdr:number;quantity:number;coverImageUrl:string|null;stockQty:number|null;}
-const KEY="toko-kangjaund:cart:v1"; const C=createContext<any>(null);
-export function CartProvider({children}:{children:React.ReactNode}){const[items,setItems]=useState<CartItem[]>([]);const[hydrated,setHydrated]=useState(false);useEffect(()=>{try{const x=localStorage.getItem(KEY);if(x)setItems(JSON.parse(x));}catch{}finally{setHydrated(true)}},[]);useEffect(()=>{if(hydrated)localStorage.setItem(KEY,JSON.stringify(items))},[items,hydrated]);const addItem=useCallback((x:Omit<CartItem,"quantity">)=>setItems(c=>{const f=c.find(i=>i.productId===x.productId);if(!f)return[...c,{...x,quantity:1}];const q=x.stockQty==null?f.quantity+1:Math.min(f.quantity+1,x.stockQty);return c.map(i=>i.productId===x.productId?{...i,quantity:q}:i)} ,[]);const updateQuantity=useCallback((id:string,q:number)=>setItems(c=>q<=0?c.filter(i=>i.productId!==id):c.map(i=>i.productId!==id?i:{...i,quantity:i.stockQty==null?q:Math.min(q,i.stockQty)})),[]);const removeItem=useCallback((id:string)=>setItems(c=>c.filter(i=>i.productId!==id)),[]);const clearCart=useCallback(()=>setItems([]),[]);const value=useMemo(()=>({items,itemCount:items.reduce((s,i)=>s+i.quantity,0),subtotalIdr:items.reduce((s,i)=>s+i.priceIdr*i.quantity,0),hasPhysicalProduct:items.some(i=>i.productType==="physical"),hydrated,addItem,updateQuantity,removeItem,clearCart}),[items,hydrated,addItem,updateQuantity,removeItem,clearCart]);return <C.Provider value={value}>{children}</C.Provider>}
-export function useCart(){const c=useContext(C);if(!c)throw new Error("useCart must be used inside CartProvider");return c;}
+
+export interface CartItem {
+  productId:string;
+  slug:string;
+  title:string;
+  productType:"digital"|"physical";
+  priceIdr:number;
+  quantity:number;
+  coverImageUrl:string|null;
+  stockQty:number|null;
+}
+
+const KEY="toko-kangjaund:cart:v1";
+const C=createContext<any>(null);
+
+export function CartProvider({children}:{children:React.ReactNode}) {
+  const[items,setItems]=useState<CartItem[]>([]);
+  const[hydrated,setHydrated]=useState(false);
+
+  useEffect(()=>{
+    try {
+      const x=localStorage.getItem(KEY);
+      if(x)setItems(JSON.parse(x));
+    } catch {}
+    finally {setHydrated(true)}
+  },[]);
+
+  useEffect(()=>{
+    if(hydrated)localStorage.setItem(KEY,JSON.stringify(items))
+  },[items,hydrated]);
+
+  const addItem=useCallback(
+    (x:Omit<CartItem,"quantity">)=>
+      setItems(c=>{
+        const f=c.find(i=>i.productId===x.productId);
+        if(!f)return[...c,{...x,quantity:1}];
+        const q=x.stockQty==null?f.quantity+1:Math.min(f.quantity+1,x.stockQty);
+        return c.map(i=>i.productId===x.productId?{...i,quantity:q}:i)
+      }),
+    []
+  );
+
+  const updateQuantity=useCallback(
+    (id:string,q:number)=>
+      setItems(c=>
+        q<=0
+          ?c.filter(i=>i.productId!==id)
+          :c.map(i=>i.productId!==id?i:{...i,quantity:i.stockQty==null?q:Math.min(q,i.stockQty)})
+      ),
+    []
+  );
+
+  const removeItem=useCallback(
+    (id:string)=>setItems(c=>c.filter(i=>i.productId!==id)),
+    []
+  );
+
+  const clearCart=useCallback(()=>setItems([]),[]);
+
+  const value=useMemo(
+    ()=>({
+      items,
+      itemCount:items.reduce((s,i)=>s+i.quantity,0),
+      subtotalIdr:items.reduce((s,i)=>s+i.priceIdr*i.quantity,0),
+      hasPhysicalProduct:items.some(i=>i.productType==="physical"),
+      hydrated,
+      addItem,
+      updateQuantity,
+      removeItem,
+      clearCart
+    }),
+    [items,hydrated,addItem,updateQuantity,removeItem,clearCart]
+  );
+
+  return <C.Provider value={value}>{children}</C.Provider>
+}
+
+export function useCart(){
+  const c=useContext(C);
+  if(!c)throw new Error("useCart must be used inside CartProvider");
+  return c;
+}

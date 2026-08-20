@@ -1,60 +1,30 @@
-# TOKO KANG JAUND — PHASE 01
-## Recovery + Database Foundation
+# Phase 03 FIX — CartProvider TypeScript Error
 
-Tanggal: 2026-08-20
+## Exact replacement path
 
-### Tujuan
-Menyambungkan architecture checkout baru ke database existing TANPA menghancurkan
-schema/order lama yang masih dipakai beta tester.
+Replace the existing file:
 
-Project existing saat ini memiliki:
-- profile
-- links
-- products
-- orders (legacy/manual payment)
+`app/components/cart/CartProvider.tsx`
 
-Phase ini TIDAK mengganti tabel `orders` lama.
+with:
 
-### Parent folder
-Semua file SQL masuk ke:
+`CartProvider.tsx`
 
-toko_kangjaund/
-└── supabase/
+## Why this fix is needed
 
-### Urutan eksekusi
+Vercel reported:
 
-1. Jalankan `01_verify_existing_db.sql`
-   - READ ONLY
-   - tidak mengubah database.
-2. Baca hasilnya.
-3. Jika tabel existing sesuai, jalankan `02_add_v2_tables.sql`.
-4. Jalankan `03_verify_v2.sql`.
-5. JANGAN menjalankan rollback kecuali memang perlu.
+`Type error: Expected 1 arguments, but got 2.`
 
-### Kenapa tidak rename orders lama?
-Karena toko sudah live/beta. `orders` lama berisi transaksi/manual flow.
-Mempertahankan tabel lama membuat rollback jauh lebih aman.
+The problem was in `addItem`: the dependency array `[]` was accidentally being passed as a second argument to `setItems()` instead of to `useCallback()`.
 
-Architecture baru sementara memakai:
-- orders_v2
-- order_items_v2
-- shipping_addresses_v2
-- shipments_v2
-- payments_v2
-- download_tokens_v2
+This replacement only fixes that parenthesis/argument placement. The cart behavior and UI-facing API are preserved.
 
-Setelah payment + shipping terbukti stabil, baru kita lakukan cutover final.
+## GitHub action
 
-### Penting
-Phase ini belum mengaktifkan:
-- RajaOngkir
-- QRIS dinamis
-- webhook pembayaran
-- fulfillment otomatis
+1. Open `app/components/cart/`
+2. Replace `CartProvider.tsx`
+3. Commit the change
+4. Wait for Vercel to redeploy
 
-Jadi production checkout belum boleh diaktifkan.
-
-### UI
-Tidak ada UI yang diganti pada phase ini.
-Design existing tetap dipertahankan. UI brief menetapkan storefront mobile-first,
-clean, modern, airy, dan checkout yang sederhana. fileciteturn0file3L262-L320
+Do not change the RajaOngkir files for this fix.
