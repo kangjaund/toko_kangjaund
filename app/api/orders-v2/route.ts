@@ -20,8 +20,6 @@ type Body = {
   courier_code?: string;
   courier_name?: string;
   courier_service?: string;
-  courier_description?: string;
-  courier_etd?: string | null;
 };
 
 function fail(message: string, status = 400) {
@@ -39,33 +37,22 @@ export async function POST(request: NextRequest) {
       return fail("quantity tidak valid.");
     }
 
-    if (!body.buyer_email?.trim()) {
-      return fail("buyer_email wajib diisi.");
-    }
-
-    if (!body.buyer_name?.trim()) {
-      return fail("buyer_name wajib diisi.");
-    }
-
-    if (!body.destination_id) {
-      return fail("destination_id wajib diisi untuk order physical.");
-    }
-
+    if (!body.buyer_email?.trim()) return fail("buyer_email wajib diisi.");
+    if (!body.buyer_name?.trim()) return fail("buyer_name wajib diisi.");
+    if (!body.destination_id) return fail("destination_id wajib diisi.");
     if (!body.courier_code || !body.courier_service) {
       return fail("Courier dan service wajib dipilih.");
     }
-
     if (!body.recipient_name?.trim() || !body.recipient_phone?.trim()) {
       return fail("Nama dan nomor penerima wajib diisi.");
     }
-
     if (!body.address_line?.trim()) {
       return fail("Alamat lengkap wajib diisi.");
     }
 
     const supabase = await createClient();
 
-    // Server-side authoritative product lookup.
+    // Product is authoritative on the server.
     const { data: product, error: productError } = await supabase
       .from("products")
       .select(
@@ -102,22 +89,12 @@ export async function POST(request: NextRequest) {
       return fail("Berat produk belum dikonfigurasi.", 500);
     }
 
-    /*
-     * IMPORTANT:
-     * This first Order Engine implementation does NOT trust a shipping
-     * price sent by the browser.
-     *
-     * The existing /api/shipping/quotes endpoint remains the authoritative
-     * shipping calculator. The browser must send only the selected courier
-     * identity. We fetch quotes server-side and find the requested service.
-     */
+    // Recalculate shipping on the server. Browser-provided shipping price
+    // is intentionally ignored.
     const quoteUrl = new URL("/api/shipping/quotes", request.url);
-
     const quoteRequest = new NextRequest(quoteUrl, {
       method: "POST",
-      headers: {
-        "content-type": "application/json",
-      },
+      headers: { "content-type": "application/json" },
       body: JSON.stringify({
         destination_id: body.destination_id,
         items: [{ product_id: product.id, quantity }],
@@ -156,7 +133,6 @@ export async function POST(request: NextRequest) {
     }
 
     const shippingCost = Number(selectedQuote.costIdr);
-
     if (!Number.isFinite(shippingCost) || shippingCost < 0) {
       return fail("Biaya pengiriman dari provider tidak valid.", 502);
     }
@@ -165,83 +141,51 @@ export async function POST(request: NextRequest) {
     const paymentFee = 0;
     const total = subtotal + shippingCost + paymentFee;
 
-    /*
-     * Snapshot the transaction.
-     *
-     * NOTE:
-     * We intentionally do not accept price/subtotal/shipping/total from
-     * the browser. All financial values below are server-calculated.
-     */
+    // Atomic DB write: order + shipping address + item either all commit
+    // or all roll back.
+    const { data: rpcResult, error: rpcError } = await supabase.rpc(
+      "create_order_v2_atomic",
+      {
+        p_buyer_email: body.buyer_email.trim().toLowerCase(),
+        p_buyer_name: body.buyer_name.trim(),
+        p_buyer_whatsapp: body.buyer_whatsapp?.trim() || "",
+        p_subtotal_idr: subtotal,
+        p_shipping_cost_idr: shippingCost,
+        p_payment_fee_idr: paymentFee,
+        p_total_idr: total,
+        p_product_id: product.id,
+        p_product_title: product.title,
+        p_unit_price_idr: unitPrice,
+        p_quantity: quantity,
+        p_weight_grams: weight,
+        p_destination_id: body.destination_id,
+        p_recipient_name: body.recipient_name.trim(),
+        p_recipient_phone: body.recipient_phone.trim(),
+        p_address_line: body.address_line.trim(),
+        p_district: body.district?.trim() || "",
+        p_city: body.city?.trim() || "",
+        p_province: body.province?.trim() || "",
+        p_postal_code: body.postal_code?.trim() || "",
+        p_notes: body.notes?.trim() || "",
+        p_courier_code: selectedQuote.courierCode,
+        p_courier_name: selectedQuote.courierName,
+        p_courier_service: selectedQuote.courierService,
+        p_courier_description: selectedQuote.courierDescription ?? "",
+        p_courier_etd: selectedQuote.etd ?? "",
+      }
+    );
 
-    const { data: shippingAddress, error: addressError } = await supabase
-      .from("shipping_addresses_v2")
-      .insert({
-        destination_id: body.destination_id,
-        recipient_name: body.recipient_name.trim(),
-        phone: body.recipient_phone.trim(),
-        address_line: body.address_line.trim(),
-        district: body.district?.trim() || null,
-        city: body.city?.trim() || null,
-        province: body.province?.trim() || null,
-        postal_code: body.postal_code?.trim() || null,
-        notes: body.notes?.trim() || null,
-        courier_code: selectedQuote.courierCode,
-        courier_name: selectedQuote.courierName,
-        courier_service: selectedQuote.courierService,
-        courier_description: selectedQuote.courierDescription ?? null,
-        courier_etd: selectedQuote.etd ?? null,
-      })
-      .select("id")
-      .single();
-
-    if (addressError || !shippingAddress) {
-      console.error("shipping_addresses_v2 insert error", addressError);
-      return fail("Gagal menyimpan alamat pengiriman.", 500);
-    }
-
-    const { data: order, error: orderError } = await supabase
-      .from("orders_v2")
-      .insert({
-        buyer_email: body.buyer_email.trim().toLowerCase(),
-        buyer_name: body.buyer_name.trim(),
-        buyer_whatsapp: body.buyer_whatsapp?.trim() || null,
-        subtotal_idr: subtotal,
-        shipping_cost_idr: shippingCost,
-        payment_fee_idr: paymentFee,
-        total_idr: total,
-        status: "pending",
-      })
-      .select("id")
-      .single();
-
-    if (orderError || !order) {
-      console.error("orders_v2 insert error", orderError);
-      return fail("Gagal membuat order.", 500);
-    }
-
-    const { error: itemError } = await supabase
-      .from("order_items_v2")
-      .insert({
-        order_id: order.id,
-        product_id: product.id,
-        product_title: product.title,
-        unit_price_idr: unitPrice,
-        quantity,
-        line_total_idr: subtotal,
-        weight_grams: weight,
-      });
-
-    if (itemError) {
-      console.error("order_items_v2 insert error", itemError);
+    if (rpcError || !rpcResult) {
+      console.error("create_order_v2_atomic error", rpcError);
       return fail(
-        "Order header berhasil dibuat tetapi item gagal disimpan. Hubungi administrator.",
+        "Gagal membuat order secara atomik.",
         500
       );
     }
 
     return NextResponse.json({
       ok: true,
-      order_id: order.id,
+      order_id: rpcResult.order_id,
       subtotal_idr: subtotal,
       shipping_cost_idr: shippingCost,
       payment_fee_idr: paymentFee,
