@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# TOKO KANG JAUND — PHASE 01
+## Recovery + Database Foundation
 
-## Getting Started
+Tanggal: 2026-08-20
 
-First, run the development server:
+### Tujuan
+Menyambungkan architecture checkout baru ke database existing TANPA menghancurkan
+schema/order lama yang masih dipakai beta tester.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Project existing saat ini memiliki:
+- profile
+- links
+- products
+- orders (legacy/manual payment)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Phase ini TIDAK mengganti tabel `orders` lama.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Parent folder
+Semua file SQL masuk ke:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+toko_kangjaund/
+└── supabase/
 
-## Learn More
+### Urutan eksekusi
 
-To learn more about Next.js, take a look at the following resources:
+1. Jalankan `01_verify_existing_db.sql`
+   - READ ONLY
+   - tidak mengubah database.
+2. Baca hasilnya.
+3. Jika tabel existing sesuai, jalankan `02_add_v2_tables.sql`.
+4. Jalankan `03_verify_v2.sql`.
+5. JANGAN menjalankan rollback kecuali memang perlu.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Kenapa tidak rename orders lama?
+Karena toko sudah live/beta. `orders` lama berisi transaksi/manual flow.
+Mempertahankan tabel lama membuat rollback jauh lebih aman.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Architecture baru sementara memakai:
+- orders_v2
+- order_items_v2
+- shipping_addresses_v2
+- shipments_v2
+- payments_v2
+- download_tokens_v2
 
-## Deploy on Vercel
+Setelah payment + shipping terbukti stabil, baru kita lakukan cutover final.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Penting
+Phase ini belum mengaktifkan:
+- RajaOngkir
+- QRIS dinamis
+- webhook pembayaran
+- fulfillment otomatis
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Jadi production checkout belum boleh diaktifkan.
+
+### UI
+Tidak ada UI yang diganti pada phase ini.
+Design existing tetap dipertahankan. UI brief menetapkan storefront mobile-first,
+clean, modern, airy, dan checkout yang sederhana. fileciteturn0file3L262-L320
