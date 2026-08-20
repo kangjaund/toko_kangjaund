@@ -1,16 +1,17 @@
 import { ButtonHTMLAttributes, AnchorHTMLAttributes } from "react";
 
-const base = "inline-flex items-center justify-center gap-1.5 font-bold uppercase tracking-wide transition disabled:opacity-50 disabled:pointer-events-none";
+const base =
+  "inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition disabled:opacity-50 disabled:pointer-events-none";
 
 const variants = {
-  primary: "bg-[#0078D7] border-2 border-[#0078D7] text-white hover:bg-[#0063B3] hover:border-[#0063B3]",
-  outline: "border-2 border-[#1A1A1A] text-[#1A1A1A] bg-transparent hover:bg-[#1A1A1A] hover:text-white",
-  ghost: "text-[#666666] hover:text-[#1A1A1A] border-2 border-transparent hover:border-[#1A1A1A]",
+  primary: "bg-orange text-white hover:bg-orange-dark",
+  outline: "border-2 border-ink/10 text-ink hover:border-orange hover:text-orange bg-white",
+  ghost: "text-stone hover:text-ink",
 };
 
 const sizes = {
-  md: "px-6 py-2.5 text-sm",
-  lg: "px-8 py-3.5 text-base",
+  md: "px-5 py-2.5 text-sm",
+  lg: "px-7 py-3.5 text-base",
   sm: "px-4 py-2 text-xs",
 };
 
@@ -22,10 +23,7 @@ export function Button({
   size = "md",
   className = "",
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: Variant;
-  size?: Size;
-}) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: Size }) {
   return (
     <button
       className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
@@ -39,14 +37,8 @@ export function LinkButton({
   size = "md",
   className = "",
   ...props
-}: AnchorHTMLAttributes<HTMLAnchorElement> & {
-  variant?: Variant;
-  size?: Size;
-}) {
+}: AnchorHTMLAttributes<HTMLAnchorElement> & { variant?: Variant; size?: Size }) {
   return (
-    <a
-      className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
-      {...props}
-    />
+    <a className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props} />
   );
 }
