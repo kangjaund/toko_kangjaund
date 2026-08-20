@@ -1,0 +1,3 @@
+"use client";
+import Link from "next/link";import {ShoppingCart} from "lucide-react";import{useCart}from"./CartProvider";
+export default function CartButton(){const{itemCount,hydrated}=useCart();return <Link href="/cart" aria-label="Keranjang" className="relative inline-flex items-center justify-center rounded-xl border-2 border-ink/10 bg-white p-2.5 text-ink"><ShoppingCart size={19}/>{hydrated&&itemCount>0?<span className="absolute -right-2 -top-2 min-w-5 rounded-full bg-orange px-1.5 py-0.5 text-center text-[10px] font-extrabold leading-4 text-white">{itemCount>99?"99+":itemCount}</span>:null}</Link>}

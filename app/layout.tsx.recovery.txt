@@ -1,0 +1,9 @@
+RECOVERY PATCH — app/layout.tsx
+
+Jangan replace seluruh layout secara blind. Pertahankan UI/metadata/BasicProtection existing.
+
+Tambahkan:
+import { CartProvider } from "./components/cart/CartProvider";
+
+Lalu bungkus children di body:
+<CartProvider>{children}</CartProvider>

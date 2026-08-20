@@ -1,0 +1,2 @@
+export function calculateLineTotal(unitPriceIdr:number, quantity:number){if(!Number.isInteger(unitPriceIdr)||unitPriceIdr<0||!Number.isInteger(quantity)||quantity<1)throw new Error("Harga/quantity tidak valid.");return unitPriceIdr*quantity;}
+export function calculateTotal(input:{subtotalIdr:number;shippingCostIdr?:number;paymentFeeIdr?:number}){return input.subtotalIdr+(input.shippingCostIdr??0)+(input.paymentFeeIdr??0);}
