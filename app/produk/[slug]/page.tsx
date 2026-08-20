@@ -1,8 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
+
 import { notFound } from "next/navigation";
+
 import Image from "next/image";
+
 import Link from "next/link";
+
 import type { Metadata } from "next";
+
 import CheckoutForm from "./checkout-form";
 
 export async function generateMetadata({
@@ -11,7 +16,9 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
+
   const supabase = await createClient();
+
   const { data: product } = await supabase
     .from("products")
     .select("title, description, price_idr, cover_image_url")
@@ -43,16 +50,24 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+
   const supabase = await createClient();
 
   const [{ data: product }, { data: profile }] = await Promise.all([
     supabase
       .from("products")
-      .select("id, slug, title, description, price_idr, stock_qty, cover_image_url, is_active")
+      .select(
+        "id, slug, title, description, price_idr, stock_qty, cover_image_url, product_type, weight_grams, is_active"
+      )
       .eq("slug", slug)
       .eq("is_active", true)
       .single(),
-    supabase.from("profile").select("qris_image_url, whatsapp_number").limit(1).single(),
+
+    supabase
+      .from("profile")
+      .select("qris_image_url, whatsapp_number")
+      .limit(1)
+      .single(),
   ]);
 
   if (!product) notFound();
@@ -80,6 +95,7 @@ export default async function ProductPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+
       <header className="border-b border-ink/5 bg-cream/90 backdrop-blur">
         <div className="mx-auto max-w-xl px-6 py-4">
           <Link href="/" className="text-sm font-semibold text-stone hover:text-orange">
@@ -104,10 +120,14 @@ export default async function ProductPage({
         )}
 
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-ink">{product.title}</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+            {product.title}
+          </h1>
+
           <p className="mt-1 text-xl font-bold text-orange-dark">
             Rp {product.price_idr.toLocaleString("id-ID")}
           </p>
+
           {product.stock_qty !== null && (
             <span
               className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-bold ${
@@ -116,7 +136,9 @@ export default async function ProductPage({
                   : "bg-neutral-100 text-neutral-500"
               }`}
             >
-              {product.stock_qty > 0 ? `Tersisa ${product.stock_qty}` : "Stok habis"}
+              {product.stock_qty > 0
+                ? `Tersisa ${product.stock_qty}`
+                : "Stok habis"}
             </span>
           )}
         </div>
@@ -128,7 +150,10 @@ export default async function ProductPage({
         )}
 
         <CheckoutForm
+          productId={product.id}
           productSlug={product.slug}
+          productType={product.product_type}
+          weightGrams={product.weight_grams}
           price={product.price_idr}
           qrisImageUrl={profile?.qris_image_url ?? null}
           whatsappNumber={profile?.whatsapp_number ?? null}
