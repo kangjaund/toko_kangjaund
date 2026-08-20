@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createServiceRoleClient } from "@/lib/supabase/server";
 
 type Body = {
   product_id?: string;
@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) {
       return fail("quantity tidak valid.");
     }
-
     if (!body.buyer_email?.trim()) return fail("buyer_email wajib diisi.");
     if (!body.buyer_name?.trim()) return fail("buyer_name wajib diisi.");
     if (!body.destination_id) return fail("destination_id wajib diisi.");
@@ -50,7 +49,10 @@ export async function POST(request: NextRequest) {
       return fail("Alamat lengkap wajib diisi.");
     }
 
-    const supabase = await createClient();
+    // This is a server-side order route. It uses the service-role client
+    // because create_order_v2_atomic is intentionally executable only by
+    // service_role. The service-role key never reaches the browser.
+    const supabase = createServiceRoleClient();
 
     // Product is authoritative on the server.
     const { data: product, error: productError } = await supabase
@@ -63,6 +65,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (productError || !product) {
+      console.error("orders-v2 product lookup error", {
+        code: productError?.code,
+        message: productError?.message,
+        details: productError?.details,
+        hint: productError?.hint,
+      });
       return fail("Produk tidak ditemukan atau tidak aktif.", 404);
     }
 
@@ -176,16 +184,20 @@ export async function POST(request: NextRequest) {
     );
 
     if (rpcError || !rpcResult) {
-      console.error("create_order_v2_atomic error", rpcError);
-      return fail(
-        "Gagal membuat order secara atomik.",
-        500
-      );
+      console.error("create_order_v2_atomic error", {
+        code: rpcError?.code,
+        message: rpcError?.message,
+        details: rpcError?.details,
+        hint: rpcError?.hint,
+      });
+
+      return fail("Gagal membuat order secara atomik.", 500);
     }
 
     return NextResponse.json({
       ok: true,
       order_id: rpcResult.order_id,
+      order_code: rpcResult.order_code,
       subtotal_idr: subtotal,
       shipping_cost_idr: shippingCost,
       payment_fee_idr: paymentFee,
