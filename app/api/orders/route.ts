@@ -81,21 +81,27 @@ export async function POST(req: NextRequest) {
         `Kode: ${orderCode}\n\n` +
         `Cek & verifikasi di dashboard > Pesanan.`;
 
-      try {
-        const tgRes = await fetch(
-          `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: process.env.TELEGRAM_CHAT_ID, text }),
+      const chatIds = process.env.TELEGRAM_CHAT_ID.split(",").map((id) => id.trim()).filter(Boolean);
+
+      await Promise.all(
+        chatIds.map(async (chatId) => {
+          try {
+            const tgRes = await fetch(
+              `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ chat_id: chatId, text }),
+              }
+            );
+            if (!tgRes.ok) {
+              console.error(`Telegram API error (chat_id ${chatId}):`, await tgRes.text());
+            }
+          } catch (err) {
+            console.error(`Gagal kirim notif Telegram ke ${chatId}:`, err);
           }
-        );
-        if (!tgRes.ok) {
-          console.error("Telegram API error:", await tgRes.text());
-        }
-      } catch (err) {
-        console.error("Gagal kirim notif Telegram:", err);
-      }
+        })
+      );
     }
 
     // Kirim email notifikasi ke email SENDIRI, subject terstruktur "Pesanan Baru #ORD-xxx"
