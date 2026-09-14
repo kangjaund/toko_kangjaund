@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 import Image from "next/image";
 import Link from "next/link";
 import { LinkButton } from "@/app/components/Button";
@@ -7,7 +7,7 @@ import { SocialIcon } from "@/app/components/SocialIcons";
 export const revalidate = 30;
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const [{ data: profile }, { data: links }, { data: products }] = await Promise.all([
     supabase.from("profile").select("*").limit(1).single(),

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import LogoutButton from "./logout-button";
 
+export const dynamic = "force-dynamic";
+
 const tabs = [
   { href: "/dashboard", label: "Ringkasan" },
   { href: "/dashboard/links", label: "Links" },

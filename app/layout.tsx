@@ -1,6 +1,14 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import BasicProtection from "./components/BasicProtection";
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+  variable: "--font-sans",
+});
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://toko-kangjaund.vercel.app";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -42,7 +50,7 @@ export default function RootLayout({
       <head>
         {supabaseUrl && <link rel="preconnect" href={supabaseUrl} />}
       </head>
-      <body className="min-h-full flex flex-col bg-cream text-ink">
+      <body className={`min-h-full flex flex-col bg-cream text-ink ${plusJakartaSans.className}`}>
         <BasicProtection />
         {children}
       </body>

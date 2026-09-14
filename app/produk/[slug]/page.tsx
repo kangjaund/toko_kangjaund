@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createPublicClient } from "@/lib/supabase/server";
 
 import { notFound } from "next/navigation";
 
@@ -10,6 +10,8 @@ import type { Metadata } from "next";
 
 import CheckoutForm from "./checkout-form";
 
+export const revalidate = 60;
+
 export async function generateMetadata({
   params,
 }: {
@@ -17,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const { data: product } = await supabase
     .from("products")
@@ -51,7 +53,7 @@ export default async function ProductPage({
 }) {
   const { slug } = await params;
 
-  const supabase = await createClient();
+  const supabase = createPublicClient();
 
   const [{ data: product }, { data: profile }] = await Promise.all([
     supabase

@@ -27,6 +27,60 @@ type ShippingQuote = {
   etd: string | null;
 };
 
+async function compressImage(file: File, maxDim = 1200, quality = 0.75): Promise<File> {
+  if (!file.type.startsWith("image/") || file.type === "image/svg+xml") {
+    return file;
+  }
+
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = document.createElement("img");
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            const compressedFile = new File(
+              [blob],
+              file.name.replace(/\.[^/.]+$/, "") + ".jpg",
+              { type: "image/jpeg", lastModified: Date.now() }
+            );
+            resolve(compressedFile);
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = e.target?.result as string;
+    };
+    reader.onerror = () => resolve(file);
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function CheckoutForm({
   productId,
   productSlug,
@@ -183,13 +237,15 @@ export default function CheckoutForm({
     setLoading(true);
 
     try {
+      const fileToUpload = await compressImage(proofFile);
+
       const formData = new FormData();
 
       formData.append("productSlug", productSlug);
       formData.append("buyerEmail", email);
       formData.append("buyerName", name);
       formData.append("buyerWhatsapp", whatsapp);
-      formData.append("proofFile", proofFile);
+      formData.append("proofFile", fileToUpload);
 
       const res = await fetch("/api/orders", {
         method: "POST",
