@@ -174,12 +174,27 @@ export default function OrdersPage() {
               )}
 
               {o.status === "paid" && o.download_token && (
-                <button
-                  onClick={() => copyDownloadLink(o.download_token!, o.id)}
-                  className="rounded-full border-2 border-green-300 px-3.5 py-1.5 text-xs font-semibold text-green-700 hover:border-green-500"
-                >
-                  {copiedId === o.id ? "Tersalin!" : "Salin link download"}
-                </button>
+                <>
+                  <button
+                    onClick={() => copyDownloadLink(o.download_token!, o.id)}
+                    className="rounded-full border-2 border-green-300 px-3.5 py-1.5 text-xs font-semibold text-green-700 hover:border-green-500"
+                  >
+                    {copiedId === o.id ? "Tersalin!" : "Salin link download"}
+                  </button>
+
+                  {o.buyer_whatsapp && (
+                    <a
+                      href={`https://wa.me/${o.buyer_whatsapp.replace(/\D/g, "").replace(/^0/, "62")}?text=${encodeURIComponent(
+                        `Halo Kak ${o.buyer_name || ""}, pesanan ${o.products?.title ?? "produk"} kamu sudah kami konfirmasi. Ini link download produk kamu ya:\n\n${typeof window !== "undefined" ? window.location.origin : ""}/api/download/${o.download_token}\n\nLink ini aktif selama 7 hari. Jika ada kendala langsung hubungi kami ya. Terima kasih banyak!`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-full border-2 border-emerald-400 bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+                    >
+                      Kirim via WA
+                    </a>
+                  )}
+                </>
               )}
             </div>
           </div>

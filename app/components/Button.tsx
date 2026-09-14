@@ -1,7 +1,7 @@
 import { ButtonHTMLAttributes, AnchorHTMLAttributes } from "react";
 
 const base =
-  "inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition disabled:opacity-50 disabled:pointer-events-none";
+  "inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition cursor-pointer disabled:opacity-50 disabled:pointer-events-none";
 
 const variants = {
   primary: "bg-orange text-white hover:bg-orange-dark",
