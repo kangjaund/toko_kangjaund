@@ -475,13 +475,31 @@ export default function CheckoutForm({
                 />
 
                 {!soldOut && (
-                  <a
-                    href="/api/qris-download"
-                    className="mt-2 block text-center text-xs font-semibold text-stone underline hover:text-orange"
-                  >
-                    Transaksi lewat m-banking di HP ini? Download gambar
-                    QRIS-nya di sini
-                  </a>
+                  <div className="mt-3 flex flex-col items-center gap-1.5">
+                    <a
+                      href="/api/qris-download"
+                      className="inline-flex w-full max-w-xs items-center justify-center gap-2 rounded-xl border-2 border-orange/30 bg-peach/50 px-4 py-2.5 text-xs font-bold text-ink transition hover:border-orange hover:bg-peach"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 text-orange"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
+                      </svg>
+                      Simpan QRIS ke Galeri HP
+                    </a>
+                    <p className="text-[11px] text-stone text-center">
+                      Buka m-Banking/e-Wallet &rarr; pilih Bayar &rarr; Scan dari Galeri
+                    </p>
+                  </div>
                 )}
               </>
             ) : (

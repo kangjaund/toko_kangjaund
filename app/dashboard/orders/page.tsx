@@ -38,6 +38,8 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [proofUrls, setProofUrls] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [notifyMsg, setNotifyMsg] = useState<{ id: string; text: string } | null>(null);
 
   async function load() {
     const { data } = await supabase
@@ -64,36 +66,104 @@ export default function OrdersPage() {
     }
   }
 
+  function exportCsv() {
+    if (orders.length === 0) return;
+
+    const headers = [
+      "Kode Order",
+      "Tanggal",
+      "Nama Pembeli",
+      "Email",
+      "WhatsApp",
+      "Produk",
+      "Nominal (IDR)",
+      "Status",
+    ];
+
+    const rows = orders.map((o) => [
+      `"${o.order_code}"`,
+      `"${new Date(o.created_at).toLocaleString("id-ID")}"`,
+      `"${(o.buyer_name || "").replace(/"/g, '""')}"`,
+      `"${o.buyer_email}"`,
+      `"${o.buyer_whatsapp || ""}"`,
+      `"${(o.products?.title || "").replace(/"/g, '""')}"`,
+      o.amount_idr,
+      `"${statusLabel[o.status] || o.status}"`,
+    ]);
+
+    const csvContent =
+      "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `rekap-pesanan-kangjaund-${new Date().toISOString().slice(0, 10)}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
   async function markPaid(order: OrderRow) {
-    const token = crypto.randomUUID();
-    const expires = new Date();
-    expires.setDate(expires.getDate() + 7);
+    setProcessingId(order.id);
 
-    await supabase
-      .from("orders")
-      .update({
-        status: "paid",
-        download_token: token,
-        download_token_expires_at: expires.toISOString(),
-        paid_at: new Date().toISOString(),
-      })
-      .eq("id", order.id);
+    try {
+      // Panggil API route server untuk update status & kirim email otomatis
+      const res = await fetch("/api/orders/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id }),
+      });
 
-    // Kurangi stok otomatis kalau produk itu punya stok terbatas (bukan null/tak terbatas)
-    const { data: product } = await supabase
-      .from("products")
-      .select("id, stock_qty")
-      .eq("id", order.product_id)
-      .single<ProductWithId>();
+      const data = await res.json();
 
-    if (product && product.stock_qty !== null && product.stock_qty > 0) {
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal mengonfirmasi pesanan");
+      }
+
+      setNotifyMsg({
+        id: order.id,
+        text: data.emailSent
+          ? "Pesanan lunas & email link download otomatis terkirim ke pembeli!"
+          : "Pesanan lunas! Silakan kirim link download via WhatsApp.",
+      });
+
+      setTimeout(() => setNotifyMsg(null), 5000);
+    } catch (err: unknown) {
+      console.error(err);
+      // Fallback update langsung dari browser jika API route terkendala
+      const token = crypto.randomUUID();
+      const expires = new Date();
+      expires.setDate(expires.getDate() + 7);
+
       await supabase
-        .from("products")
-        .update({ stock_qty: product.stock_qty - 1 })
-        .eq("id", product.id);
-    }
+        .from("orders")
+        .update({
+          status: "paid",
+          download_token: token,
+          download_token_expires_at: expires.toISOString(),
+          paid_at: new Date().toISOString(),
+        })
+        .eq("id", order.id);
 
-    load();
+      const { data: product } = await supabase
+        .from("products")
+        .select("id, stock_qty")
+        .eq("id", order.product_id)
+        .single<ProductWithId>();
+
+      if (product && product.stock_qty !== null && product.stock_qty > 0) {
+        await supabase
+          .from("products")
+          .update({ stock_qty: product.stock_qty - 1 })
+          .eq("id", product.id);
+      }
+    } finally {
+      setProcessingId(null);
+      load();
+    }
   }
 
   async function reject(orderId: string) {
@@ -110,14 +180,44 @@ export default function OrdersPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <p className="text-xs font-bold uppercase tracking-widest text-orange">Pesanan</p>
-        <h1 className="text-2xl font-extrabold tracking-tight text-ink">Pesanan Masuk</h1>
-        <p className="mt-1 text-sm text-stone">
-          Cek bukti transfer, lalu tandai lunas. Link download dibuat otomatis, tapi
-          kamu yang kirim manual ke pembeli (WA/email).
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-orange">Pesanan</p>
+          <h1 className="text-2xl font-extrabold tracking-tight text-ink">Pesanan Masuk</h1>
+          <p className="mt-1 text-sm text-stone">
+            Cek bukti transfer, lalu tandai lunas. Email konfirmasi akan terkirim otomatis ke pembeli.
+          </p>
+        </div>
+
+        {orders.length > 0 && (
+          <button
+            onClick={exportCsv}
+            className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full border-2 border-ink/10 bg-white px-4 py-2 text-xs font-bold text-ink transition hover:border-orange hover:text-orange cursor-pointer"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 text-orange"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+            Ekspor Rekap CSV
+          </button>
+        )}
       </div>
+
+      {notifyMsg && (
+        <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4 text-xs font-bold text-emerald-800 shadow-sm animate-fade-in">
+          {notifyMsg.text}
+        </div>
+      )}
 
       <div className="flex flex-col gap-3">
         {orders.map((o) => (
@@ -161,8 +261,12 @@ export default function OrdersPage() {
 
               {o.status === "pending_review" && (
                 <>
-                  <Button onClick={() => markPaid(o)} size="sm">
-                    Tandai lunas
+                  <Button
+                    onClick={() => markPaid(o)}
+                    size="sm"
+                    disabled={processingId === o.id}
+                  >
+                    {processingId === o.id ? "Memproses..." : "Tandai lunas"}
                   </Button>
                   <button
                     onClick={() => reject(o.id)}

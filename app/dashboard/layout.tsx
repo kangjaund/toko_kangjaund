@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LogoutButton from "./logout-button";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,13 @@ const tabs = [
   { href: "/dashboard/settings", label: "Pengaturan" },
 ];
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient();
+  const { count: pendingCount } = await supabase
+    .from("orders")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending_review");
+
   return (
     <div className="min-h-screen bg-cream">
       <header className="border-b border-ink/5 bg-white">
@@ -24,9 +31,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link
                 key={tab.href}
                 href={tab.href}
-                className="rounded-full px-3.5 py-1.5 text-sm font-medium text-stone transition hover:bg-peach hover:text-orange-dark"
+                className="relative inline-flex items-center rounded-full px-3.5 py-1.5 text-sm font-medium text-stone transition hover:bg-peach hover:text-orange-dark cursor-pointer"
               >
-                {tab.label}
+                <span>{tab.label}</span>
+                {tab.href === "/dashboard/orders" && (pendingCount ?? 0) > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white leading-none">
+                    {pendingCount}
+                  </span>
+                )}
               </Link>
             ))}
           </nav>
