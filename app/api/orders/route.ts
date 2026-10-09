@@ -7,7 +7,6 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const productSlug = formData.get("productSlug") as string | null;
-    const productTitle = formData.get("productTitle") as string | null;
     const buyerEmail = formData.get("buyerEmail") as string | null;
     const buyerName = formData.get("buyerName") as string | null;
     const buyerWhatsapp = formData.get("buyerWhatsapp") as string | null;
@@ -26,7 +25,6 @@ export async function POST(req: NextRequest) {
     const { data: product, error } = await supabase
       .from("products")
       .select("id, title, price_idr, is_active, stock_qty")
-      .eq("title", productTitle)
       .eq("slug", productSlug)
       .single();
 
@@ -77,7 +75,7 @@ export async function POST(req: NextRequest) {
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
       const text =
         `<b>Alhamdulillah, ada Pesanan Baru!</b>\n` +
-        `• <b>Produk:</b> ${productTitle}\n` +
+        `• <b>Produk:</b> ${productSlug}\n` +
         `• <b>Harga:</b> Rp ${product.price_idr.toLocaleString("id-ID")}\n` +
         `• <b>Pembeli:</b> ${buyerName || "-"} (${buyerEmail})\n` +
         `• <b>Kode:</b> ${orderCode}\n\n` +
