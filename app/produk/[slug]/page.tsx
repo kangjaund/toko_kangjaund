@@ -153,7 +153,7 @@ export default async function ProductPage({
 
         <CheckoutForm
           productId={product.id}
-          productSlug={product.slug}
+          productSlug={product.title}
           productType={product.product_type}
           weightGrams={product.weight_grams}
           price={product.price_idr}
