@@ -74,11 +74,11 @@ export async function POST(req: NextRequest) {
     // bisa keputus di tengah jalan begitu response dikirim balik.
     if (process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID) {
       const text =
-        `🛒 Pesanan baru!\n` +
-        `Produk: ${productSlug}\n` +
-        `Harga: Rp ${product.price_idr.toLocaleString("id-ID")}\n` +
-        `Pembeli: ${buyerName || "-"} (${buyerEmail})\n` +
-        `Kode: ${orderCode}\n\n` +
+        `<b>Alhamdulillah, ada Pesanan Baru!</b>\n` +
+        `• <b>Produk:</b> ${productSlug}\n` +
+        `• <b>Harga:</b> Rp ${product.price_idr.toLocaleString("id-ID")}\n` +
+        `• <b>Pembeli:</b> ${buyerName || "-"} (${buyerEmail})\n` +
+        `• <b>Kode:</b> ${orderCode}\n\n` +
         `Cek & verifikasi di dashboard > Pesanan.`;
 
       const chatIds = process.env.TELEGRAM_CHAT_ID.split(",").map((id) => id.trim()).filter(Boolean);
